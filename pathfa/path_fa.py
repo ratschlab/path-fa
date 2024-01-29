@@ -187,6 +187,42 @@ def path_fa(
     positive_U=True, diag_hess_U=False, diag_hess_B=False,
     device='cpu', double=True, empirical_bayes=True, svd_init=True
 ):
+    """Run unimodal PathFA on modality specified by data Y and mask C.
+
+    This function implements the PathFA algorithm for a given data set and mask that denote the
+    markers. The rows of both matrices denote markers and the columns denote the samples and
+    pathways for Y and C, respectively. Defaults are used for the experiments in the PathFA paper.
+    
+    Parameters
+    ----------
+    Y: np.ndarray 
+        Observations of shape [markers, samples]
+    C: np.ndarray 
+        Pathway prior masks of shape [markers, pathways] typically binary {0, 1}.
+    n_latents: int
+        number of latent variables to learn
+    n_epochs: int, default 100
+        number of alternating least squares (ALS) steps
+    lr: float, default 1e-1
+        learning rate for th ALS steps
+    positive_U: bool, default False
+        whether to restrict/project U to remain positive
+    diag_hess_U: bool, default False
+        whether to use diagonal Hessian of U (pathways by latents) for cheaper inference, e.g.,
+        when the number of pathways is too large (> 1,000).
+    diag_hess_B: bool, default False
+        whether to use diagonal Hessian of B (latents by samples) for cheaper inference, e.g.,
+        when the number of samples is too large (> 10,000).
+    device: str, {'cpu', 'cuda'} default 'cpu'
+        device for torch to run on
+    double: bool, default True
+        use double precision in torch
+    empirical_bayes: bool, default True
+        whether to use empirical Bayesian hyperparameter updates. Otherwise, will keep regularizer
+        fixed but infer observation noises using maximum likelihood.
+    svd_init: bool, default True
+        whether to initialize the latent variables in B using SVD on Y.
+    """
     EPS = EPS_DOUBLE if double else EPS_FLOAT
     def proj(x):
         return torch.clamp(torch.nan_to_num(x), min=EPS, max=1/EPS)
@@ -387,6 +423,50 @@ def multi_path_fa(
     device='cpu', double=True, factor='scalar',
     empirical_bayes=True, svd_init=True
 ):
+    """Run bi-modal PathFA on two modalities specified by Yr, Cr, and Yp, Cp, respectively.
+
+    This function implements the PathFA algorithm for a given data set and mask that denote the
+    markers. The rows of the matrix pairs denote markers and the columns denote the samples and
+    pathways for Yx and Cx, respectively. (Yr, Cr) and (Yp, Cp) can have different markers but
+    need to map to the same pathways, i.e., Cr and Cp must have the same columns.
+    Defaults are used for the experiments in the PathFA paper, where `r` denotes RNA and `p` prot.
+    
+    Parameters
+    ----------
+    Yr: np.ndarray 
+        Observations of shape [markers_r, samples]
+    Cr: np.ndarray 
+        Pathway prior masks of shape [markers_r, pathways] typically binary {0, 1}.
+    Yp: np.ndarray 
+        Observations of shape [markers_p, samples]
+    Cp: np.ndarray 
+        Pathway prior masks of shape [markers_p, pathways] typically binary {0, 1}.
+    n_latents: int
+        number of latent variables to learn
+    n_epochs: int, default 100
+        number of alternating least squares (ALS) steps
+    lr: float, default 1e-1
+        learning rate for th ALS steps
+    positive_U: bool, default False
+        whether to restrict/project U to remain positive
+    diag_hess_U: bool, default False
+        whether to use diagonal Hessian of U (pathways by latents) for cheaper inference, e.g.,
+        when the number of pathways is too large (> 1,000).
+    diag_hess_B: bool, default False
+        whether to use diagonal Hessian of B (latents by samples) for cheaper inference, e.g.,
+        when the number of samples is too large (> 10,000).
+    device: str, {'cpu', 'cuda'} default 'cpu'
+        device for torch to run on
+    double: bool, default True
+        use double precision in torch
+    factor: str, {'none', 'scalar', 'diagonal'}, default 'scalar'
+        whether and how to include a factor for the markers of both modalities.
+    empirical_bayes: bool, default True
+        whether to use empirical Bayesian hyperparameter updates. Otherwise, will keep regularizer
+        fixed but infer observation noises using maximum likelihood.
+    svd_init: bool, default True
+        whether to initialize the latent variables in B using SVD on Y.
+    """
     EPS = EPS_DOUBLE if double else EPS_FLOAT
     def proj(x):
         return torch.clamp(torch.nan_to_num(x), min=EPS, max=1/EPS)

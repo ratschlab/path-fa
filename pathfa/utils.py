@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -10,7 +9,7 @@ import logging
 import anndata
 
 
-TUPRO_PATH = '/cluster/work/tumorp/share/pathfa'
+TUPRO_PATH = ''  # TODO: set this for reproducing on TuPro
 
 # samples that have prot, rna, cytof, and clinical information available
 subset_melanoma_samples = [
